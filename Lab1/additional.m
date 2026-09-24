@@ -1,23 +1,30 @@
-% основные параметры
+% чтение данных
 [y, Fs] = audioread('voice.wav');
-y = y(1:end, 1);
-t = (0 : 1/Fs : (length(y)-1)/Fs)';
-f_shift = 600;
-y_shifted = real(y .* exp(1i * 2 * pi * f_shift * t));
+y = y(:, 1);
 
-% график
 N = length(y);
-f = (0:N/2-1) * (Fs / N);
+f_shift = 600;
 
-% спектр исходного сигнала
+y_spec = fft(y);
+
+
+k_shift = round(f_shift * N / Fs);
+
+% сдвиг сигнала
+y_shifted_spec = zeros(N, 1);
+y_shifted_spec(k_shift + 1 : N/2) = 2 * y_spec(1 : N/2 - k_shift);
+
+y_shifted = real(ifft(y_shifted_spec));
+
+f = (0 : N/2 - 1) * (Fs / N);
+
+% графики
 Y_orig = abs(fft(y));
-Y_orig = Y_orig(1:N/2);
+Y_orig = Y_orig(1 : N/2);
 
-% спектр обработанного сигнала
 Y_shift = abs(fft(y_shifted));
-Y_shift = Y_shift(1:N/2);
+Y_shift = Y_shift(1 : N/2);
 
-% Отрисовка на графике
 figure;
 plot(f, Y_orig, 'b', 'LineWidth', 1.2); hold on;
 plot(f, Y_shift, 'r', 'LineWidth', 1.2); 
@@ -30,6 +37,6 @@ xlabel('Частота (Гц)');
 ylabel('Амплитуда');
 legend('Исходный голос', 'После сдвига (y\_shifted)');
 
-% check voice
+% Воспроизведение
 new_audio = audioplayer(y_shifted, Fs);
 play(new_audio);
