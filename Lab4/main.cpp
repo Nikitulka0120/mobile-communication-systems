@@ -23,7 +23,7 @@ void cycle_offset(vector<int8_t> &array)
 int8_t golds_generator(vector<int8_t> &x, vector<int8_t> &y)
 {
     int8_t output = x[4] ^ y[4];
-    int8_t back_x = x[3] ^ x[4];
+    int8_t back_x = x[1] ^ x[4];
     int8_t back_y = y[1] ^ y[4];
 
     cycle_offset(x);
@@ -122,22 +122,37 @@ bool is_m_sequence(const vector<int8_t> &seq)
     bool balance = abs(ones - zeros) <= 1;
 
     // цикличность
-    int max_len = 0, cur_len = 1;
-    for (int i = 0; i < 2 * n; ++i)
-    {
-        if (seq[i % n] == seq[(i + 1) % n])
-        {
-            cur_len++;
-            if (cur_len > max_len)
-                max_len = cur_len;
-        }
-        else
-        {
-            cur_len = 1;
+    int cycles[100] = { 0 };
+    int len = 1;
+
+    for (int i = 1; i < n; i++) {
+        if (seq[i] == seq[i - 1]) {
+            len++;
+        } else {
+            cycles[len]++;
+            len = 1;
         }
     }
+    cycles[len]++;
+
     int m = round(log2(n + 1));
-    bool runs = (max_len <= m);
+    int max_len = 0;
+    bool result = true;
+
+    double total_expected_runs = (n + 1) / 2.0;
+    double expected = total_expected_runs / 2.0;
+
+    for (int i = 1; i <= m; i++) {
+        if (cycles[i] > 0) max_len = i;
+
+        if (abs(cycles[i] - expected) > 1) {
+            result = false;
+        }
+        
+        expected /= 2.0;
+    }
+
+    bool runs = (max_len <= m) && result;
 
     // корреляция
     bool autocorr = true;
@@ -223,6 +238,19 @@ int main()
     // взаимная корреляция
     cout << "\n\n\n ==== TASK 4 ====\n";
     print_cross_correlation(seq1, seq2);
+
+    cout << "\n\n\n ==== ADDITIONAL TASK ====\n";
+    std::vector<int8_t> m_seq = {
+        1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1};
+
+    if (is_m_sequence(m_seq))
+    {
+        cout << "=> Это М-последовательность!\n";
+    }
+    else
+    {
+        cout << "=> Это НЕ М-последовательность\n";
+    }
 
     return 0;
 }
